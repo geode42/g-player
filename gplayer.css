@@ -93,6 +93,10 @@ g-player:has(.seek-bar-click-area:hover, .seek-bar-container.seeking) .seek-bar-
 g-player:has(.seek-bar-click-area:hover, .seek-bar-container.seeking) .seek-bar-container > *.seek-bar {
 	scale: 1 1.55;
 }
+/* Hide popover when the bar isn't being hovered and isn't seeking */
+g-player:not(:has(.seek-bar-click-area:hover, .seek-bar-container.seeking)) .seek-bar-popover {
+	display: none;
+}
 
 g-player .seek-bar-thumb {
 	scale: 0;
@@ -157,16 +161,22 @@ g-player .play-pause-button.paused {
 	background-image: url('./icons/GoogleMaterialSymbols/play.svg');
 }
 g-player .mute-button.not-muted {
-	background-image: url('./icons/GoogleMaterialSymbols/not-mute.svg');
+	background-image: url('./icons/GoogleMaterialSymbols/volume-up.svg');
 }
 g-player .mute-button.muted {
-	background-image: url('./icons/GoogleMaterialSymbols/mute.svg');
+	background-image: url('./icons/GoogleMaterialSymbols/volume-off.svg');
 }
 g-player .fullscreen-button.not-fullscreen {
 	background-image: url('./icons/GoogleMaterialSymbols/fullscreen.svg');
 }
 g-player .fullscreen-button.fullscreen {
 	background-image: url('./icons/GoogleMaterialSymbols/fullscreen-exit.svg');
+}
+g-player .subtitles-button.subtitles-disabled {
+	background-image: url('./icons/GoogleMaterialSymbols/closed-caption.svg');
+}
+g-player .subtitles-button.subtitles-enabled {
+	background-image: url('./icons/GoogleMaterialSymbols/closed-caption-disabled.svg');
 }
 
 g-player video {
@@ -178,4 +188,39 @@ g-player {
 	position: relative;
 	background: black;
 	user-select: none;
+}
+
+.subtitle-container {
+	position: absolute;
+	bottom: 2rem;
+	left: 50%;
+	translate: -50% -50%;
+	color: white;
+	font-family: 'Inter';
+	font-weight: 700;
+	font-size: 2.2rem;
+	filter: drop-shadow(0 0 2rem black) drop-shadow(0 0 1rem black);
+}
+
+.seek-bar-popover {
+	position: absolute;
+	bottom: 1rem;
+	translate: -50% -50%;
+	z-index: 9999;
+	display: flex;
+	flex-direction: column-reverse;
+	gap: 0.5rem;
+	filter: drop-shadow(0 0 2rem black);
+}
+
+.seek-bar-preview {
+	width: 20rem;
+	border-radius: 1rem;
+}
+
+.seek-bar-timecode {
+	font-family: 'Inter', sans-serif;
+	text-align: center;
+	font-weight: 500;
+	color: white;
 }

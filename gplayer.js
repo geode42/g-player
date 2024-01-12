@@ -1,3 +1,6 @@
+import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js'
+import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify/dist/purify.es.mjs'
+
 /**
  * Returns an HTML element
  * @param { string } tagname
@@ -17,10 +20,37 @@ function createElement(tagname, options) {
 	return element
 }
 
+function formatTime(time) {
+	const hours = Math.floor(time / 3600)
+	const minutes = Math.floor((time - hours * 3600) / 60)
+	const seconds = Math.floor(time - hours * 3600 - minutes * 60)
+	return hours ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}` : `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+function parseSRT(srt) {
+	const parseSRTTimecode = timecode => {
+		const [ hours, minutes, seconds, milliseconds ] = timecode.split(/:|,/g).map(i => parseInt(i))
+		return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000
+	}
+	const blocks = srt.split('\n\n').filter(i => i).map(block => block.split('\n').map(line => line.trim()))
+	
+	const subtitles = []
+	for (const block of blocks) {
+		const [ start, end ] = block[1].split('-->').map(i => parseSRTTimecode(i.trim()))
+		const text = block[2]
+		subtitles.push({ start, end, text })
+	}
+
+	return subtitles
+}
+
 class GPlayer extends HTMLElement {
-	static observedAttributes = ['src']
+	static observedAttributes = ['src', 'sub']
 	
 	options
+	#subtitleObjects
+	#subtitles = false
+	#subtitlesButton
 	#videoElement
 	#fullscreen
 	#playPauseButton
@@ -36,6 +66,9 @@ class GPlayer extends HTMLElement {
 	// attributeChangedCallback below handles the changing
 	get src() { return this.getAttribute('src') }
 	set src(newValue) { this.setAttribute('src', newValue) }
+
+	get sub() { return this.getAttribute('sub') }
+	set sub(newValue) { this.setAttribute('sub', newValue) }
 
 	#updateFullscreen() {
 		if (this.#fullscreen) {
@@ -89,6 +122,64 @@ class GPlayer extends HTMLElement {
 	toggleMute() {
 		this.muted = !this.muted
 	}
+
+	#updateSubtitles() {
+		if (this.#subtitles) {
+			this.#subtitlesButton.classList.add('subtitles-enabled')
+			this.#subtitlesButton.classList.remove('subtitles-disabled')
+		} else {
+			this.#subtitlesButton.classList.add('subtitles-disabled')
+			this.#subtitlesButton.classList.remove('subtitles-enabled')
+		}
+	}
+	get subtitles() { return this.#subtitles }
+	set subtitles(newValue) { this.#subtitles = newValue; this.#updateSubtitles() }
+	toggleSubtitles() {
+		this.subtitles = !this.subtitles
+	}
+
+	/* ----------------------------- Seekbar Preview ---------------------------- */
+
+	#seekbarPreviewImages = []
+
+	async #renderSeekBarPreviewImages() {
+		this.#seekbarPreviewImages = []
+		const imageCount = Math.floor(this.#videoElement.duration / this.options.previewImageInterval)
+
+		const video = createElement('video')
+		video.src = this.#videoElement.src
+		const size = this.options.previewImageMaxSize.width / this.#videoElement.videoWidth < this.options.previewImageMaxSize.height / this.#videoElement.videoHeight ?
+			{ width: this.options.previewImageMaxSize.width, height: this.options.previewImageMaxSize.width / this.#videoElement.videoWidth * this.#videoElement.videoHeight }
+			: { width: this.options.previewImageMaxSize.height / this.#videoElement.videoHeight * this.#videoElement.videoWidth, height: this.options.previewImageMaxSize.height }
+
+
+		// resize video to output size
+		video.width = size.width
+		video.height = size.height
+
+		// create canvas
+		const canvas = createElement('canvas')
+		canvas.width = size.width
+		canvas.height = size.height
+		const ctx = canvas.getContext('2d')
+
+		for (let i = 0; i < imageCount; i++) {
+			const timecode = this.#videoElement.duration - this.#videoElement.duration / (imageCount - 1) * (imageCount - 1 - i) - 1
+			video.currentTime = timecode
+			// Wait for the frame to load
+			// loadeddata seems to only fire once, so polling is used instead
+			await new Promise(r => {
+				setInterval(() => {
+					if (video.readyState >= 2) r()
+				}, 10);
+			})
+	
+			ctx.drawImage(video, 0, 0, size.width, size.height)
+			this.#seekbarPreviewImages.push({ timecode, image: canvas.toDataURL() })
+		}
+	}
+
+	/* -------------------------------------------------------------------------- */
 	
 	constructor() {
 		super()
@@ -97,6 +188,8 @@ class GPlayer extends HTMLElement {
 		this.options = {
 			doubleClickDuration: 250,
 			hideControlsTimeout: 1500,
+			previewImageInterval: 5,
+			previewImageMaxSize: { width: 960, height: 540 },
 		}
 	}
 
@@ -131,6 +224,7 @@ class GPlayer extends HTMLElement {
 			seekBarThumb.style.left = `${newCompletedPortion * seekBarContainer.offsetWidth}px`
 			updateSeekBar()
 			this.#updateTimeInfo()
+			updateseekBarPopover((e.clientX - seekBarContainer.getBoundingClientRect().left) / seekBarContainer.offsetWidth * this.#videoElement.duration)
 		}
 
 		seekBarClickArea.addEventListener('mousedown', e => {
@@ -151,6 +245,39 @@ class GPlayer extends HTMLElement {
 			updateSeekBar()
 		})
 		updateSeekBar()
+
+		/* ---------------------------- Seek Bar Popover ---------------------------- */
+		const seekBarPopover = createElement('div', { class: 'seek-bar-popover' })
+		const seekBarPreview = createElement('img', { class: 'seek-bar-preview' })
+		const seekBarTimecode = createElement('div', { class: 'seek-bar-timecode' })
+
+		seekBarPreview.src = ''
+
+		seekBarPopover.append(seekBarTimecode, seekBarPreview)
+		seekBarContainer.append(seekBarPopover)
+
+		const updateseekBarPopover = (timecode) => {
+			for (const frame of this.#seekbarPreviewImages) {
+				if (frame.timecode >= timecode) {
+					seekBarPreview.src = frame.image
+					break
+				}
+			}
+			seekBarTimecode.textContent = formatTime(timecode)
+		}
+
+		seekBarContainer.addEventListener('mousemove', e => {
+			updateseekBarPopover((e.clientX - seekBarContainer.getBoundingClientRect().left) / seekBarContainer.offsetWidth * this.#videoElement.duration)
+			let pos = (e.clientX - seekBarContainer.getBoundingClientRect().left)
+			if (pos < seekBarPreview.offsetWidth / 2) {
+				pos = seekBarPreview.offsetWidth / 2
+			}
+			if (pos > seekBarContainer.offsetWidth - seekBarPreview.offsetWidth / 2) {
+				pos = seekBarContainer.offsetWidth - seekBarPreview.offsetWidth / 2
+			}
+			seekBarPopover.style.left = `${pos}px`
+		})
+
 
 		/* --------------------------- Video element ended -------------------------- */
 		this.#videoElement.addEventListener('ended', e => {
@@ -196,18 +323,14 @@ class GPlayer extends HTMLElement {
 		this.#fullscreenButton = createElement('button', { class: 'fullscreen-button' })
 		this.#fullscreenButton.addEventListener('click', e => this.toggleFullscreen())
 
+		this.#subtitlesButton = createElement('button', { class: 'subtitles-button' })
+		this.#subtitlesButton.addEventListener('click', e => this.toggleSubtitles())
+
 		const timeInfoContainer = createElement('div', { class: 'time-info-container' })
 		const timeCurrentSpan = createElement('span')
 		const timeSeparatorSpan = createElement('span', { text: '/', class: 'separator' })
 		const timeDurationSpan = createElement('span')
 		timeInfoContainer.append(timeCurrentSpan, timeSeparatorSpan, timeDurationSpan)
-
-		const formatTime = time => {
-			const hours = Math.floor(time / 3600)
-			const minutes = Math.floor((time - hours * 3600) / 60)
-			const seconds = Math.floor(time - hours * 3600 - minutes * 60)
-			return hours ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}` : `${minutes}:${String(seconds).padStart(2, '0')}`
-		}
 
 		const updateTimeInfo = () => {
 			timeCurrentSpan.textContent = formatTime(this.#videoElement.currentTime)
@@ -221,7 +344,7 @@ class GPlayer extends HTMLElement {
 		updateTimeInfo()
 
 		lowerControlsContainerLeft.append(this.#playPauseButton, this.#muteButton, timeInfoContainer)
-		lowerControlsContainerRight.append(this.#fullscreenButton)
+		lowerControlsContainerRight.append(this.#subtitlesButton, this.#fullscreenButton)
 
 		/* ---------------------------------- Misc ---------------------------------- */
 		// css didn't work for some reason
@@ -240,6 +363,7 @@ class GPlayer extends HTMLElement {
 		this.#updatePlayPaused()
 		this.#updateMuted()
 		this.#updateFullscreen()
+		this.#updateSubtitles()
 		
 		/* ------------------------------ Player click ------------------------------ */
 		let lastClickTime = 0
@@ -263,6 +387,7 @@ class GPlayer extends HTMLElement {
 			this.#updateHideControls()
 			switch (e.key) {
 				case ' ':
+					if (document.activeElement.tagName == 'BUTTON') return  // if a button is focused space clicks it
 					this.togglePlayPaused()
 					break;
 				case 'k':
@@ -273,6 +398,9 @@ class GPlayer extends HTMLElement {
 					break;
 				case 'f':
 					this.toggleFullscreen()
+					break;
+				case 'c':
+					this.toggleSubtitles()
 					break;
 				case 'Escape':
 					this.fullscreen = false
@@ -294,11 +422,42 @@ class GPlayer extends HTMLElement {
 					break;
 			}
 		})
+
+		/* -------------------------------- Subtitles ------------------------------- */
+		const subtitleContainer = createElement('div', { class: 'subtitle-container' })
+		this.append(subtitleContainer)
+
+		const updateSubtitles = () => {
+			subtitleContainer.innerHTML = ''
+
+			if (this.#subtitles) {
+				for (const subtitle of this.#subtitleObjects) {
+					if (this.#videoElement.currentTime >= subtitle.start && this.#videoElement.currentTime < subtitle.end) {
+						subtitleContainer.innerHTML = DOMPurify.sanitize(marked.parse(subtitle.text))
+						break
+					}
+				}
+			}
+			requestAnimationFrame(updateSubtitles)
+		}
+
+		requestAnimationFrame(updateSubtitles)
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
-		if (name == 'src') {
-			this.#videoElement.src = newValue
+		switch (name) {
+			case 'src':
+				this.#videoElement.src = newValue
+				const videoElementLoadedListener = this.#videoElement.addEventListener('loadeddata', () => {
+					this.#renderSeekBarPreviewImages()
+				})
+				this.#videoElement.removeEventListener('loadeddata', videoElementLoadedListener)
+				break
+			case 'sub':
+				fetch(newValue).then(i => i.text().then(i => this.#subtitleObjects = parseSRT(i)) )
+				break
+			default:
+				break
 		}
 	}
 
