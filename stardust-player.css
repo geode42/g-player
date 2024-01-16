@@ -1,0 +1,294 @@
+@font-face {
+  font-family: Inter;
+  src: url("./fonts/Inter/InterVariable.woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: Inter;
+  font-style: italic;
+  src: url("./fonts/Inter/InterVariable-Italic.woff2");
+  font-display: swap;
+}
+stardust-player, stardust-player *, stardust-player :before, stardust-player :after {
+  box-sizing: border-box;
+}
+
+stardust-player {
+  display: block;
+  position: relative;
+  background: black;
+  user-select: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  /* Hide popover when the bar isn't being hovered and isn't seeking */
+}
+stardust-player:focus {
+  outline: none;
+}
+stardust-player video {
+  object-fit: contain;
+}
+stardust-player .gradient-bottom {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 8rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6666666667));
+  pointer-events: none;
+}
+stardust-player .mobile-controls-container {
+  display: none;
+}
+stardust-player .controls-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-inline: 0.8rem;
+}
+stardust-player .controls-container, stardust-player .mobile-controls-container * {
+  transition: 200ms opacity;
+}
+stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seekbar:hover)) {
+  cursor: none;
+}
+stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seekbar:hover)) .controls-container, stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seekbar:hover)) .mobile-controls-container, stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seekbar:hover)) .gradient-bottom {
+  opacity: 0;
+}
+stardust-player.no-click .controls-container, stardust-player.no-click .mobile-controls-container {
+  pointer-events: none;
+}
+stardust-player button {
+  background-color: transparent;
+  border: none;
+  width: 3.5rem;
+  aspect-ratio: 1;
+}
+stardust-player :where(:is(.controls-container, .mobile-controls-container) button) {
+  height: 3.5rem;
+  aspect-ratio: 1;
+  border: none;
+  cursor: pointer;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center center;
+  filter: invert(100%);
+  background-size: 50%;
+  opacity: 0.9;
+}
+stardust-player :where(:is(.controls-container, .mobile-controls-container) button):hover {
+  opacity: 1;
+}
+stardust-player .time-info-container {
+  height: 3rem;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.28rem;
+  padding-inline: 0.65rem;
+  font-size: 1.1em;
+  font-family: "Inter", sans-serif;
+  opacity: 0.9;
+}
+stardust-player stardust-seekbar {
+  position: relative;
+  height: 0;
+  display: flex;
+  align-items: center;
+  z-index: 999;
+}
+stardust-player stardust-seekbar > * {
+  height: 0.23rem;
+  transition: 100ms scale;
+}
+stardust-player stardust-seekbar .seek-bar-click-area {
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  right: 0;
+  height: 1.8rem;
+  cursor: pointer;
+}
+stardust-player stardust-seekbar .seek-bar-watched {
+  background: red;
+}
+stardust-player stardust-seekbar .seek-bar-remaining {
+  background: rgba(136, 136, 136, 0.5333333333);
+  flex-grow: 1;
+}
+stardust-player stardust-seekbar .seek-bar-thumb {
+  width: 0;
+  height: 0;
+  z-index: 999;
+  pointer-events: none;
+}
+stardust-player stardust-seekbar .seek-bar-thumb::after {
+  content: "";
+  display: block;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  translate: -50% -50%;
+  background: red;
+  scale: 0;
+  transition: 100ms scale;
+}
+stardust-player stardust-seekbar .seek-bar-popover {
+  position: absolute;
+  bottom: 1rem;
+  translate: -50% -50%;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.5rem;
+  filter: drop-shadow(0 0 2rem black);
+}
+stardust-player stardust-seekbar .seek-bar-preview {
+  width: 20rem;
+  border-radius: 1rem;
+}
+stardust-player stardust-seekbar .seek-bar-timecode {
+  font-family: "Inter", sans-serif;
+  text-align: center;
+  font-weight: 500;
+  color: white;
+}
+stardust-player:has(.seek-bar-click-area:hover, stardust-seekbar.seeking) .seek-bar-thumb::after {
+  scale: 1;
+}
+stardust-player:has(.seek-bar-click-area:hover, stardust-seekbar.seeking) stardust-seekbar > .seek-bar {
+  scale: 1 1.55;
+}
+stardust-player:not(:has(.seek-bar-click-area:hover, stardust-seekbar.seeking)) .seek-bar-popover {
+  display: none;
+}
+stardust-player .lower-controls-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+stardust-player .lower-controls-container > div {
+  display: flex;
+  align-items: center;
+}
+stardust-player .play-pause-button {
+  background-size: 65%;
+}
+stardust-player .play-pause-button {
+  background-image: url("./icons/GoogleMaterialSymbols/pause.svg");
+}
+stardust-player.paused .play-pause-button {
+  background-image: url("./icons/GoogleMaterialSymbols/play.svg");
+}
+stardust-player .mute-button {
+  background-image: url("./icons/GoogleMaterialSymbols/volume-up.svg");
+}
+stardust-player.muted .mute-button {
+  background-image: url("./icons/GoogleMaterialSymbols/volume-off.svg");
+}
+stardust-player .fullscreen-button {
+  background-image: url("./icons/GoogleMaterialSymbols/fullscreen.svg");
+}
+stardust-player.fullscreen .fullscreen-button {
+  background-image: url("./icons/GoogleMaterialSymbols/fullscreen-exit.svg");
+}
+stardust-player .subtitles-button {
+  background-image: url("./icons/GoogleMaterialSymbols/closed-caption.svg");
+}
+stardust-player.subtitles .subtitles-button {
+  background-image: url("./icons/GoogleMaterialSymbols/closed-caption-disabled.svg");
+}
+stardust-player .subtitle-container {
+  position: absolute;
+  bottom: 9rem;
+  left: 50%;
+  translate: -50% 50%;
+  color: white;
+  font-family: "Inter";
+  font-weight: 700;
+  font-size: 2.2em;
+  filter: drop-shadow(0 0 2rem black) drop-shadow(0 0 1rem black);
+  pointer-events: none;
+  width: 25em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+stardust-player.fullscreen stardust-seekbar > .seek-bar {
+  height: 0.3rem;
+}
+stardust-player.fullscreen .seek-bar-thumb::after {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+stardust-player.mobile .mobile-controls-container {
+  display: unset;
+}
+stardust-player.mobile * {
+  font-size: 0.95rem;
+}
+stardust-player.mobile .controls-container {
+  display: none;
+}
+stardust-player.mobile .mobile-controls-container .lower-controls {
+  position: absolute;
+  bottom: 3rem;
+  left: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+stardust-player.mobile .mobile-controls-container .seek-bar-click-area {
+  bottom: -2rem;
+  height: 3.3rem;
+}
+stardust-player.mobile .mobile-controls-container .play-pause-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  filter: invert(100%) drop-shadow(0 0 20rem black) drop-shadow(0 0 20rem black) drop-shadow(0 0 20rem black);
+  width: 5rem;
+  height: 5rem;
+  background-color: rgba(255, 255, 255, 0.5333333333);
+  border-radius: 999px;
+  background-size: 85%;
+}
+stardust-player.mobile .mobile-controls-container .above-seekbar-controls {
+  display: flex;
+  justify-content: space-between;
+  z-index: 999;
+}
+stardust-player.mobile .mobile-controls-container .above-seekbar-controls .time-info-container {
+  translate: 0 0.65rem;
+}
+stardust-player.mobile .mobile-controls-container stardust-seekbar {
+  z-index: 0;
+}
+stardust-player.mobile .mobile-controls-container .upper-controls {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+stardust-player.mobile:has(stardust-seekbar.seeking) .seek-bar-thumb::after {
+  scale: 1;
+}
+stardust-player.mobile:has(stardust-seekbar.seeking) stardust-seekbar > .seek-bar {
+  scale: 1 1.55;
+}
+stardust-player.mobile .seek-bar-popover .seek-bar-preview {
+  display: none;
+}
+stardust-player.mobile .subtitle-container * {
+  font-size: unset;
+  margin: 0;
+}
+stardust-player.mobile .subtitle-container {
+  font-size: 1.5em;
+  bottom: 6rem;
+}
+
+/*# sourceMappingURL=stardust-player.css.map */
