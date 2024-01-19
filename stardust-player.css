@@ -13,6 +13,34 @@ stardust-player, stardust-player *, stardust-player :before, stardust-player :af
   box-sizing: border-box;
 }
 
+stardust-player :is(.controls-container, .mobile-controls-container) button > *:nth-child(2) {
+  display: none;
+}
+stardust-player.paused .play-pause-button > *:nth-child(1) {
+  display: none;
+}
+stardust-player.paused .play-pause-button > *:nth-child(2) {
+  display: unset;
+}
+stardust-player.muted .mute-button > *:nth-child(1) {
+  display: none;
+}
+stardust-player.muted .mute-button > *:nth-child(2) {
+  display: unset;
+}
+stardust-player.subtitles .subtitles-button > *:nth-child(1) {
+  display: none;
+}
+stardust-player.subtitles .subtitles-button > *:nth-child(2) {
+  display: unset;
+}
+stardust-player.fullscreen .fullscreen-button > *:nth-child(1) {
+  display: none;
+}
+stardust-player.fullscreen .fullscreen-button > *:nth-child(2) {
+  display: unset;
+}
+
 stardust-player {
   display: block;
   position: relative;
@@ -55,26 +83,31 @@ stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seek
 stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seekbar:hover)) .controls-container, stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seekbar:hover)) .mobile-controls-container, stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seekbar:hover)) .gradient-bottom {
   opacity: 0;
 }
+stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seekbar:hover)) .controls-container *, stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seekbar:hover)) .mobile-controls-container *, stardust-player.controls-hidden:not(:has(stardust-seekbar.seeking, stardust-seekbar:hover)) .gradient-bottom * {
+  pointer-events: none !important;
+}
 stardust-player.no-click .controls-container, stardust-player.no-click .mobile-controls-container {
   pointer-events: none;
 }
 stardust-player button {
-  background-color: transparent;
+  background: transparent;
   border: none;
   width: 3.5rem;
   aspect-ratio: 1;
+  padding: 0;
+}
+stardust-player button svg {
+  width: 50%;
+  height: 50%;
 }
 stardust-player :where(:is(.controls-container, .mobile-controls-container) button) {
   height: 3.5rem;
   aspect-ratio: 1;
-  border: none;
   cursor: pointer;
-  background-color: transparent;
-  background-repeat: no-repeat;
-  background-position: center center;
-  filter: invert(100%);
-  background-size: 50%;
+  border: none;
+  background: transparent;
   opacity: 0.9;
+  color: white;
 }
 stardust-player :where(:is(.controls-container, .mobile-controls-container) button):hover {
   opacity: 1;
@@ -154,10 +187,10 @@ stardust-player stardust-seekbar .seek-bar-timecode {
   font-weight: 500;
   color: white;
 }
-stardust-player:has(.seek-bar-click-area:hover, stardust-seekbar.seeking) .seek-bar-thumb::after {
+stardust-player:not(stardust-player.mobile):has(.seek-bar-click-area:hover, stardust-seekbar.seeking) .seek-bar-thumb::after {
   scale: 1;
 }
-stardust-player:has(.seek-bar-click-area:hover, stardust-seekbar.seeking) stardust-seekbar > .seek-bar {
+stardust-player:not(stardust-player.mobile):has(.seek-bar-click-area:hover, stardust-seekbar.seeking) stardust-seekbar > .seek-bar {
   scale: 1 1.55;
 }
 stardust-player:not(:has(.seek-bar-click-area:hover, stardust-seekbar.seeking)) .seek-bar-popover {
@@ -167,37 +200,15 @@ stardust-player .lower-controls-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-top: 0.1rem;
 }
 stardust-player .lower-controls-container > div {
   display: flex;
   align-items: center;
 }
-stardust-player .play-pause-button {
-  background-size: 65%;
-}
-stardust-player .play-pause-button {
-  background-image: url("./icons/GoogleMaterialSymbols/pause.svg");
-}
-stardust-player.paused .play-pause-button {
-  background-image: url("./icons/GoogleMaterialSymbols/play.svg");
-}
-stardust-player .mute-button {
-  background-image: url("./icons/GoogleMaterialSymbols/volume-up.svg");
-}
-stardust-player.muted .mute-button {
-  background-image: url("./icons/GoogleMaterialSymbols/volume-off.svg");
-}
-stardust-player .fullscreen-button {
-  background-image: url("./icons/GoogleMaterialSymbols/fullscreen.svg");
-}
-stardust-player.fullscreen .fullscreen-button {
-  background-image: url("./icons/GoogleMaterialSymbols/fullscreen-exit.svg");
-}
-stardust-player .subtitles-button {
-  background-image: url("./icons/GoogleMaterialSymbols/closed-caption.svg");
-}
-stardust-player.subtitles .subtitles-button {
-  background-image: url("./icons/GoogleMaterialSymbols/closed-caption-disabled.svg");
+stardust-player .play-pause-button svg {
+  width: 65%;
+  height: 65%;
 }
 stardust-player .subtitle-container {
   position: absolute;
@@ -223,60 +234,109 @@ stardust-player.fullscreen .seek-bar-thumb::after {
   height: 1.3rem;
 }
 
+stardust-player.mobile stardust-seekbar .seek-bar {
+  scale: 1 0.6;
+}
+stardust-player.mobile stardust-seekbar .seek-bar-thumb::after {
+  scale: 0.7;
+}
+stardust-player.mobile stardust-seekbar.seeking .seek-bar {
+  scale: 1 0.6;
+}
 stardust-player.mobile .mobile-controls-container {
   display: unset;
 }
+stardust-player.mobile .mobile-controls-container .lower-controls button {
+  height: 5.5rem;
+  padding-top: 3rem;
+  width: 8.5rem;
+  padding-left: 2rem;
+}
+stardust-player.mobile .mobile-controls-container .upper-controls button {
+  box-sizing: unset;
+  padding-left: 2rem;
+  padding-bottom: 2rem;
+  padding-right: 0.5rem;
+  padding-top: 0.5rem;
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+}
+stardust-player.mobile .mobile-controls-container .upper-controls button svg {
+  width: 60%;
+  height: 60%;
+}
 stardust-player.mobile * {
-  font-size: 0.95rem;
+  font-size: 0.8rem;
+  filter: none;
 }
 stardust-player.mobile .controls-container {
   display: none;
 }
 stardust-player.mobile .mobile-controls-container .lower-controls {
   position: absolute;
-  bottom: 3rem;
+  bottom: 5rem;
   left: 1rem;
   right: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.2em;
+  pointer-events: none;
+}
+stardust-player.mobile .mobile-controls-container .lower-controls stardust-seekbar, stardust-player.mobile .mobile-controls-container .lower-controls button {
+  pointer-events: all;
 }
 stardust-player.mobile .mobile-controls-container .seek-bar-click-area {
-  bottom: -2rem;
-  height: 3.3rem;
+  bottom: -3rem;
+  height: 4.7rem;
 }
 stardust-player.mobile .mobile-controls-container .play-pause-button {
   position: absolute;
   top: 50%;
   left: 50%;
   translate: -50% -50%;
-  filter: invert(100%) drop-shadow(0 0 20rem black) drop-shadow(0 0 20rem black) drop-shadow(0 0 20rem black);
-  width: 5rem;
-  height: 5rem;
-  background-color: rgba(255, 255, 255, 0.5333333333);
+  width: 4rem;
+  height: 4rem;
+  background: rgba(0, 0, 0, 0.5333333333);
   border-radius: 999px;
-  background-size: 85%;
+  display: grid;
+  place-items: center;
+}
+stardust-player.mobile .mobile-controls-container .play-pause-button svg {
+  width: 80%;
+  height: 80%;
 }
 stardust-player.mobile .mobile-controls-container .above-seekbar-controls {
   display: flex;
   justify-content: space-between;
+  align-items: end;
   z-index: 999;
+  position: absolute;
+  bottom: 0.5rem;
+  right: -1rem;
+  left: 0;
+}
+stardust-player.mobile .mobile-controls-container .above-seekbar-controls *:last-child {
+  padding-right: 0;
+  text-align: right;
 }
 stardust-player.mobile .mobile-controls-container .above-seekbar-controls .time-info-container {
-  translate: 0 0.65rem;
+  padding: 0;
+  translate: 0 0.5rem;
 }
 stardust-player.mobile .mobile-controls-container stardust-seekbar {
   z-index: 0;
 }
 stardust-player.mobile .mobile-controls-container .upper-controls {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 0;
+  right: 0;
 }
-stardust-player.mobile:has(stardust-seekbar.seeking) .seek-bar-thumb::after {
+:where(stardust-player.mobile:has(stardust-seekbar.seeking)) .seek-bar-thumb::after {
   scale: 1;
 }
-stardust-player.mobile:has(stardust-seekbar.seeking) stardust-seekbar > .seek-bar {
+:where(stardust-player.mobile:has(stardust-seekbar.seeking)) stardust-seekbar > .seek-bar {
   scale: 1 1.55;
 }
 stardust-player.mobile .seek-bar-popover .seek-bar-preview {

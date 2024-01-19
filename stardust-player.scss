@@ -16,6 +16,44 @@ stardust-player, stardust-player *, stardust-player :before, stardust-player :af
 }
 
 stardust-player {
+	:is(.controls-container, .mobile-controls-container) button > *:nth-child(2) {
+		display: none;
+	}
+	&.paused .play-pause-button > * {
+		&:nth-child(1) {
+			display: none;
+		}
+		&:nth-child(2) {
+			display: unset;
+		}
+	}
+	&.muted .mute-button > * {
+		&:nth-child(1) {
+			display: none;
+		}
+		&:nth-child(2) {
+			display: unset;
+		}
+	}
+	&.subtitles .subtitles-button > * {
+		&:nth-child(1) {
+			display: none;
+		}
+		&:nth-child(2) {
+			display: unset;
+		}
+	}
+	&.fullscreen .fullscreen-button > * {
+		&:nth-child(1) {
+			display: none;
+		}
+		&:nth-child(2) {
+			display: unset;
+		}
+	}
+}
+
+stardust-player {
 	display: block;
 	position: relative;
 	background: black;
@@ -61,6 +99,10 @@ stardust-player {
 
 		.controls-container, .mobile-controls-container, .gradient-bottom {
 			opacity: 0;
+			// Prevent buttons from being clickable when invisible
+			* {
+				pointer-events: none !important;
+			}
 		}
 	}
 
@@ -71,23 +113,26 @@ stardust-player {
 	}
 
 	button {
-		background-color: transparent;
+		background: transparent;
 		border: none;
 		width: 3.5rem;
 		aspect-ratio: 1;
+		padding: 0;
+
+		svg {
+			width: 50%;
+			height: 50%;
+		}
 	}
 
 	:where(:is(.controls-container, .mobile-controls-container) button) {
 		height: 3.5rem;
 		aspect-ratio: 1;
-		border: none;
 		cursor: pointer;
-		background-color: transparent;
-		background-repeat: no-repeat;
-		background-position: center center;
-		filter: invert(100%);
-		background-size: 50%;
+		border: none;
+		background: transparent;
 		opacity: 0.9;
+		color: white;
 
 		&:hover {
 			opacity: 1;
@@ -174,7 +219,7 @@ stardust-player {
 		}
 	}
 
-	&:has(.seek-bar-click-area:hover, stardust-seekbar.seeking) {
+	&:not(&.mobile):has(.seek-bar-click-area:hover, stardust-seekbar.seeking) {
 		.seek-bar-thumb::after {
 			scale: 1;
 		}
@@ -192,6 +237,7 @@ stardust-player {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		padding-top: 0.1rem;
 
 		> div {
 			display: flex;
@@ -199,33 +245,9 @@ stardust-player {
 		}
 	}
 
-	.play-pause-button {
-		background-size: 65%;
-	}
-	
-	.play-pause-button {
-		background-image: url('./icons/GoogleMaterialSymbols/pause.svg');
-	}
-	&.paused .play-pause-button {
-		background-image: url('./icons/GoogleMaterialSymbols/play.svg');
-	}
-	.mute-button {
-		background-image: url('./icons/GoogleMaterialSymbols/volume-up.svg');
-	}
-	&.muted .mute-button {
-		background-image: url('./icons/GoogleMaterialSymbols/volume-off.svg');
-	}
-	.fullscreen-button {
-		background-image: url('./icons/GoogleMaterialSymbols/fullscreen.svg');
-	}
-	&.fullscreen .fullscreen-button {
-		background-image: url('./icons/GoogleMaterialSymbols/fullscreen-exit.svg');
-	}
-	.subtitles-button {
-		background-image: url('./icons/GoogleMaterialSymbols/closed-caption.svg');
-	}
-	&.subtitles .subtitles-button {
-		background-image: url('./icons/GoogleMaterialSymbols/closed-caption-disabled.svg');
+	.play-pause-button svg {
+		width: 65%;
+		height: 65%;
 	}
 
 	.subtitle-container {
@@ -258,12 +280,59 @@ stardust-player.fullscreen {
 }
 
 stardust-player.mobile {
+	stardust-seekbar {
+		.seek-bar {
+			scale: 1 0.6;
+		}
+		.seek-bar-thumb::after {
+			scale: 0.7;
+		}
+
+		&.seeking .seek-bar {
+			scale: 1 0.6;
+		}
+	}
+
 	.mobile-controls-container {
 		display: unset;
+
+		.lower-controls button {
+			height: 5.5rem;
+			padding-top: 3rem;
+			width: 8.5rem;
+			padding-left: 2rem;
+
+			// svg {
+			// 	width: 60%;
+			// 	height: 60%;
+			// }
+		}
+
+		.upper-controls button {
+			box-sizing: unset;
+			// margin-top: -1rem;
+			// height: 6.5rem;
+			padding-left: 2rem;
+			padding-bottom: 2rem;
+			padding-right: 0.5rem;
+			padding-top: 0.5rem;
+			width: 3rem;
+			height: 3rem;
+			// padding-bottom: 5rem;
+			// padding-left: 5rem;
+			display: grid;
+			place-items: center;
+
+			svg {
+				width: 60%;
+				height: 60%;
+			}
+		}
 	}
 
 	* {
-		font-size: 0.95rem;
+		font-size: 0.8rem;
+		filter: none;  // Phones are really slow
 	}
 
 	.controls-container {
@@ -273,17 +342,22 @@ stardust-player.mobile {
 	.mobile-controls-container {
 		.lower-controls {
 			position: absolute;
-			bottom: 3rem;
+			bottom: 5rem;
 			left: 1rem;
 			right: 1rem;
 			display: flex;
 			flex-direction: column;
 			gap: 0.2em;
+			pointer-events: none;
+
+			stardust-seekbar, button {
+				pointer-events: all;
+			}
 		}
 
 		.seek-bar-click-area {
-			bottom: -2rem;
-			height: 3.3rem;
+			bottom: -3rem;
+			height: 4.7rem;
 		}
 
 		.play-pause-button {
@@ -291,21 +365,39 @@ stardust-player.mobile {
 			top: 50%;
 			left: 50%;
 			translate: -50% -50%;
-			filter: invert(100%) drop-shadow(0 0 20rem black) drop-shadow(0 0 20rem black) drop-shadow(0 0 20rem black);
-			width: 5rem;
-			height: 5rem;
-			background-color: #FFF8;
+			width: 4rem;
+			height: 4rem;
+			background: #0008;
 			border-radius: 999px;
-			background-size: 85%;
+			display: grid;
+			place-items: center;
+
+			svg {
+				width: 80%;
+				height: 80%;
+			}
 		}
 
 		.above-seekbar-controls {
 			display: flex;
 			justify-content: space-between;
+			align-items: end;
 			z-index: 999;
+			// margin-bottom: 0.5rem;
+			position: absolute;
+			bottom: 0.5rem;
+			right: -1rem;
+			left: 0;
+			// left: -0.6rem;
+
+			*:last-child {
+				padding-right: 0;
+				text-align: right;
+			}
 
 			.time-info-container {
-				translate: 0 0.65rem;
+				padding: 0;
+				translate: 0 0.5rem;
 			}
 		}
 
@@ -315,12 +407,18 @@ stardust-player.mobile {
 
 		.upper-controls {
 			position: absolute;
-			top: 1rem;
-			right: 1rem;
+			top: 0;
+			right: 0;
+
+
+			// *:last-child {
+			// 	padding-right: 0;
+			// 	text-align: right;
+			// }
 		}
 	}
 
-	&:has(stardust-seekbar.seeking) {
+	:where(&:has(stardust-seekbar.seeking)) {
 		.seek-bar-thumb::after {
 			scale: 1;
 		}

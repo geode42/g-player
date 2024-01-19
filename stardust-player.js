@@ -4,17 +4,24 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify/dist/purify.es.mjs
 /**
  * Returns an HTML element
  * @param { string } tagname
- * @param { { class?: string | string[], id?: string, text?: string, html?: string } } options 
+ * @param { {
+ *     class?: string | string[],
+ *     id?: string,
+ *     text?: string,
+ *     html?: string,
+ *     children?: HTMLElement[]
+ * } } options 
  * @returns { HTMLElement }
  */
 function createElement(tagname, options) {
 	const element = document.createElement(tagname)
 	if (options) {
 		if (typeof options.class == 'string') element.className = options.class
-		if (typeof options.class.join == 'function') element.className = options.class.join(' ')
+		if (options.class && typeof options.class.join == 'function') element.className = options.class.join(' ')
 		if (options.id) element.id = options.id
 		if (options.text) element.textContent = options.text
 		if (options.html) element.innerHTML = options.html
+		if (options.children) element.replaceChildren(...options.children)
 	}
 
 	return element
@@ -46,6 +53,21 @@ function parseSRT(srt) {
 
 function clamp(min, n, max) {
 	return Math.min(Math.max(n, min), max)
+}
+
+function HTMLStringToElement(HTMLString) {
+	return new DOMParser().parseFromString(HTMLString, 'text/html').body.childNodes[0]
+}
+
+const icons = {
+	play: () => HTMLStringToElement('<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M320-200v-560l440 280-440 280Z"/></svg>'),
+	pause: () => HTMLStringToElement('<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M560-200v-560h160v560H560Zm-320 0v-560h160v560H240Z"/></svg>'),
+	volumeUp: () => HTMLStringToElement('<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M560-131v-82q90-26 145-100t55-168q0-94-55-168T560-749v-82q124 28 202 125.5T840-481q0 127-78 224.5T560-131ZM120-360v-240h160l200-200v640L280-360H120Zm440 40v-322q47 22 73.5 66t26.5 96q0 51-26.5 94.5T560-320Z"/></svg>'),
+	volumeOff: () => HTMLStringToElement('<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M792-56 671-177q-25 16-53 27.5T560-131v-82q14-5 27.5-10t25.5-12L480-368v208L280-360H120v-240h128L56-792l56-56 736 736-56 56Zm-8-232-58-58q17-31 25.5-65t8.5-70q0-94-55-168T560-749v-82q124 28 202 125.5T840-481q0 53-14.5 102T784-288ZM650-422l-90-90v-130q47 22 73.5 66t26.5 96q0 15-2.5 29.5T650-422ZM480-592 376-696l104-104v208Z"/></svg>'),
+	fullscreen: () => HTMLStringToElement('<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M120-120v-200h80v120h120v80H120Zm520 0v-80h120v-120h80v200H640ZM120-640v-200h200v80H200v120h-80Zm640 0v-120H640v-80h200v200h-80Z"/></svg>'),
+	fullscreenExit: () => HTMLStringToElement('<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M240-120v-120H120v-80h200v200h-80Zm400 0v-200h200v80H720v120h-80ZM120-640v-80h120v-120h80v200H120Zm520 0v-200h80v120h120v80H640Z"/></svg>'),
+	closedCaptions: () => HTMLStringToElement('<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M200-160q-33 0-56.5-23.5T120-240v-480q0-33 23.5-56.5T200-800h560q33 0 56.5 23.5T840-720v480q0 33-23.5 56.5T760-160H200Zm80-200h120q17 0 28.5-11.5T440-400v-40h-60v20h-80v-120h80v20h60v-40q0-17-11.5-28.5T400-600H280q-17 0-28.5 11.5T240-560v160q0 17 11.5 28.5T280-360Zm280 0h120q17 0 28.5-11.5T720-400v-40h-60v20h-80v-120h80v20h60v-40q0-17-11.5-28.5T680-600H560q-17 0-28.5 11.5T520-560v160q0 17 11.5 28.5T560-360Z"/></svg>'),
+	closedCaptionsDisabled: () => HTMLStringToElement('<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M819-28 687-160H200q-33 0-56.5-23.5T120-240v-487l-93-93 57-57L876-85l-57 57Zm21-207L706-369q7-5 10.5-13.5T720-400v-40h-60v20h-5l-75-75v-45h80v20h60v-40q0-17-11.5-28.5T680-600H560q-17 0-28.5 11.5T520-560v5L275-800h485q33 0 56.5 23.5T840-720v485ZM280-360h120q17 0 28.5-11.5T440-400v-7l-33-33h-27v20h-80v-127l-45-45q-7 5-11 13.5t-4 18.5v160q0 17 11.5 28.5T280-360Z"/></svg>'),
 }
 
 class StardustSeekBar extends HTMLElement {
@@ -163,6 +185,7 @@ class StardustPlayer extends HTMLElement {
 	#seekBarPreviewTimecode
 	#updateHideControls
 	#subtitleObjects
+	#screenIsTouched = false
 
 	// Aliases for the HTML attribute,
 	// attributeChangedCallback below handles the changing
@@ -270,9 +293,9 @@ class StardustPlayer extends HTMLElement {
 
 		this.options = {
 			doubleClickDuration: 250,
-			doubleTapJumpDuration: 250,
+			doubleTapJumpDuration: 500,
 			doubleTapJumpDistance: 5,
-			doubleTapJumpScreenPortion: 0.3,
+			doubleTapJumpScreenPortion: 0.2,
 			hideControlsTimeout: 1500,
 			hideControlsTimeoutMobile: 3000,
 			previewImageIterations: 8,
@@ -313,11 +336,17 @@ class StardustPlayer extends HTMLElement {
 
 		this.#updateHideControls = () => {
 			this.classList.remove('controls-hidden')
+			setTimeout(() => {
+				if (!this.#screenIsTouched) {
+					this.classList.remove('no-click')
+				}
+			}, 1);
 			clearTimeout(hideControlsTimeout)
 			hideControlsTimeout = setTimeout(() => {
 				if (this.paused) return  // don't hide if paused
 				if (this.#ended) return  // don't hide if ended
 				this.classList.add('controls-hidden')
+				this.classList.add('no-click')
 			}, this.classList.contains('mobile') ? this.options.hideControlsTimeoutMobile : this.options.hideControlsTimeout)
 		}
 
@@ -335,17 +364,17 @@ class StardustPlayer extends HTMLElement {
 		controlsContainer.append(lowerControlsContainer)
 		lowerControlsContainer.append(lowerControlsContainerLeft, lowerControlsContainerRight)
 		
-		const playPauseButton = createElement('button', { class: 'play-pause-button' })
-		playPauseButton.addEventListener('click', e => this.togglePaused())
+		const playPauseButton = createElement('button', { class: 'play-pause-button', children: [ icons.pause(), icons.play() ] })
+		playPauseButton.addEventListener('click', () => this.togglePaused())
 		
-		const muteButton = createElement('button', { class: 'mute-button' })
-		muteButton.addEventListener('click', e => this.toggleMute())
+		const muteButton = createElement('button', { class: 'mute-button', children: [ icons.volumeUp(), icons.volumeOff() ] })
+		muteButton.addEventListener('click', () => this.toggleMute())
 
-		const fullscreenButton = createElement('button', { class: 'fullscreen-button' })
-		fullscreenButton.addEventListener('click', e => this.toggleFullscreen())
+		const fullscreenButton = createElement('button', { class: 'fullscreen-button', children: [ icons.fullscreen(), icons.fullscreenExit() ] })
+		fullscreenButton.addEventListener('click', () => this.toggleFullscreen())
 
-		const subtitlesButton = createElement('button', { class: 'subtitles-button' })
-		subtitlesButton.addEventListener('click', e => this.toggleSubtitles())
+		const subtitlesButton = createElement('button', { class: 'subtitles-button', children: [ icons.closedCaptions(), icons.closedCaptionsDisabled() ] })
+		subtitlesButton.addEventListener('click', () => this.toggleSubtitles())
 
 		const timeInfoContainer = createElement('div', { class: 'time-info-container' })
 		const timeCurrentSpan = createElement('span')
@@ -364,7 +393,7 @@ class StardustPlayer extends HTMLElement {
 		mobileControlsContainer.append(mobileLowerControls, mobileUpperControls)
 		mobileLowerControls.append(mobileAboveSeekbarControls)
 
-		const mobilePlayPauseButton = createElement('button', { class: 'play-pause-button' })
+		const mobilePlayPauseButton = createElement('button', { class: 'play-pause-button', children: [ icons.pause(), icons.play() ] })
 		mobilePlayPauseButton.addEventListener('click', () => this.togglePaused())
 		mobileControlsContainer.append(mobilePlayPauseButton)
 
@@ -374,7 +403,7 @@ class StardustPlayer extends HTMLElement {
 		const mobileTimeDurationSpan = createElement('span')
 		mobileTimeInfoContainer.append(mobileTimeCurrentSpan, mobileTimeSeparatorSpan, mobileTimeDurationSpan)
 
-		const mobileFullscreen = createElement('button', { class: 'fullscreen-button' })
+		const mobileFullscreen = createElement('button', { class: 'fullscreen-button', children: [ icons.fullscreen(), icons.fullscreenExit() ] })
 		mobileFullscreen.addEventListener('click', () => this.toggleFullscreen())
 
 		mobileAboveSeekbarControls.append(mobileTimeInfoContainer, mobileFullscreen)
@@ -390,7 +419,7 @@ class StardustPlayer extends HTMLElement {
 		})
 
 
-		const mobileSubtitlesButton = createElement('button', { class: 'subtitles-button' })
+		const mobileSubtitlesButton = createElement('button', { class: 'subtitles-button', children: [ icons.closedCaptions(), icons.closedCaptionsDisabled() ] })
 		mobileSubtitlesButton.addEventListener('click', () => this.toggleSubtitles())
 		mobileUpperControls.append(mobileSubtitlesButton)
 
@@ -431,24 +460,10 @@ class StardustPlayer extends HTMLElement {
 			} else {
 				const portion = (e.clientX - this.offsetLeft) / this.offsetWidth
 				const direction = portion <= this.options.doubleTapJumpScreenPortion ? 'l' : (portion >= 1 - this.options.doubleTapJumpScreenPortion ? 'r' : '')
-				let jumped = false
 				clearTimeout(tapJumpTimeout)
 				if (direction) {
 					if (Date.now() - lastTapTime <= this.options.doubleTapJumpDuration) {
 						this.#videoElement.currentTime += direction == 'r' ? this.options.doubleTapJumpDistance : -this.options.doubleTapJumpDistance
-						jumped = true
-						lastTapTime = 0
-					}
-					lastTapTime = Date.now()
-				}
-				if (!jumped) {
-					if (!direction) {
-						if (this.classList.contains('controls-hidden')) {
-							this.#updateHideControls()
-						} else {
-							this.classList.add('controls-hidden')
-							this.classList.add('no-click')
-						}
 					} else {
 						tapJumpTimeout = setTimeout(() => {
 							if (this.classList.contains('controls-hidden')) {
@@ -459,19 +474,29 @@ class StardustPlayer extends HTMLElement {
 							}
 						}, this.options.doubleTapJumpDuration)
 					}
+					lastTapTime = Date.now()
+				} else {
+					if (this.classList.contains('controls-hidden')) {
+						this.#updateHideControls()
+					} else {
+						this.classList.add('controls-hidden')
+						this.classList.add('no-click')
+					}
 				}
 			}
 		})
 
 		// Hack to fix bug where pointerdown causes UI to show and pointerup causese playpause button to click
+		this.#videoElement.addEventListener('pointerdown', e => {
+			this.#screenIsTouched = true
+		})
 		this.#videoElement.addEventListener('pointerup', e => {
-			if (e.pointerType != 'mouse') {
+			this.#screenIsTouched = false
+			setTimeout(() => {
 				if (!(this.classList.contains('controls-hidden'))) {
-					setTimeout(() => {
-						this.classList.remove('no-click')
-					}, 100)
+					this.classList.remove('no-click')
 				}
-			}
+			}, 1);
 		})
 
 		/* -------------------------------- Keyboard -------------------------------- */
